@@ -1,0 +1,52 @@
+name: CI/CD Full Pipeline
+
+on:
+  push:
+    branches: main  # 你的主分支名称
+
+jobs:
+  # Job 1: 在 GitHub 云端完成拉代码和构建
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist/  # 你的构建产物目录（可能是 build/、out/ 等）
+
+  # Job 2: 只把构建产物传到服务器
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-files
+          path: dist/
+      
+      - name: Upload to Aliyun
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          password: ${{ secrets.ALIYUN_PASSWORD }}
+          source: "dist/*"
+          target: "/home/admin/testworkflows/"
+          strip_components: 1
+      
+      - name: Restart Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          password: ${{ secrets.ALIYUN_PASSWORD }}
+          script: |
+            cd /home/admin/testworkflows
+            npm install --production
+            pm2 restart testworkflows
