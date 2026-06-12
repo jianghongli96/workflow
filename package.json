@@ -43,5 +43,8 @@
   },
   "volta": {
     "node": "20.20.2"
-  }
+  },
+  "resolutions": {
+  "@babel/generator": "7.23.0"
+}
 }
