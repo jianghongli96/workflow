@@ -18,7 +18,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist-files
-          path: dist/  # 你的构建产物目录（可能是 build/、out/ 等）
+          path: dist/  # Vite 项目默认构建输出目录为 dist
 
   # Job 2: 只把构建产物传到服务器
   deploy:
@@ -52,5 +52,14 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd /home/admin/testworkflows
-            yarn install --production
-            pm2 restart testworkflows
+            
+            # 安装依赖 (如果需要)
+            yarn install --production || true
+            
+            # 尝试重启，如果进程不存在则启动
+            pm2 restart testworkflows 2>/dev/null || pm2 start serve --name "testworkflows" -- -s . -l 3000
+            
+            # 保存 PM2 配置，使服务器重启后能自动恢复
+            pm2 save
+            
+            echo "✅ Deployment and service restart completed"
