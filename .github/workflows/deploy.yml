@@ -13,8 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
-      - run: npm run build
+      - run: yarn install --frozen-lockfile
+      - run: yarn run build:prod
       - uses: actions/upload-artifact@v4
         with:
           name: dist-files
@@ -48,5 +48,5 @@ jobs:
           password: ${{ secrets.ALIYUN_PASSWORD }}
           script: |
             cd /home/admin/testworkflows
-            npm install --production
+            yarn install --production
             pm2 restart testworkflows
